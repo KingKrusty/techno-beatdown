@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Techno Calisthenics Beatdown</title>
+    <style>
+        body { margin: 0; background: #0d0d0d; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        canvas { background: #1a1a1a; border: 2px solid #00ffcc; }
+        #score { position: absolute; top: 10px; left: 10px; color: #fff; font-family: Arial; font-size: 20px; }
+    </style>
+</head>
+<body>
+    <div id="score">Score: 0</div>
+    <canvas id="gameCanvas" width="400" height="600"></canvas>
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        let score = 0;
+        let blocks = [];
+        const targetY = 500; // Where blocks must be hit
+
+        // Block class
+        class Block {
+            constructor(x, type) {
+                this.x = x;
+                this.y = -20;
+                this.width = 80;
+                this.height = 20;
+                this.type = type; // "pushup" (A), "squat" (S)
+                this.color = type === "pushup" ? "#ff0066" : "#00ffcc";
+            }
+            update() {
+                this.y += 2; // Fall speed
+            }
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+                ctx.fillStyle = "#fff";
+                ctx.font = "16px Arial";
+                ctx.fillText(this.type === "pushup" ? "A" : "S", this.x + 35, this.y + 15);
+            }
+        }
+
+        // Target zones
+        function drawTargets() {
+            ctx.fillStyle = "#ff0066";
+            ctx.fillRect(100, targetY, 80, 20); // Push-up (A)
+            ctx.fillStyle = "#00ffcc";
+            ctx.fillRect(220, targetY, 80, 20); // Squat (S)
+            ctx.fillStyle = "#fff";
+            ctx.font = "16px Arial";
+            ctx.fillText("A", 135, targetY + 15);
+            ctx.fillText("S", 255, targetY + 15);
+        }
+
+        // Game loop
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawTargets();
+
+            // Spawn blocks randomly (every ~2s)
+            if (Math.random() < 0.02) {
+                const type = Math.random() < 0.5 ? "pushup" : "squat";
+                const x = type === "pushup" ? 100 : 220;
+                blocks.push(new Block(x, type));
+            }
+
+            // Update and draw blocks
+            blocks.forEach((block, index) => {
+                block.update();
+                block.draw();
+                if (block.y > canvas.height) blocks.splice(index, 1); // Remove off-screen
+            });
+
+            document.getElementById("score").innerText = `Score: ${score}`;
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Keypress handling
+        document.addEventListener("keydown", (e) => {
+            blocks.forEach((block, index) => {
+                if (
+                    (e.key === "a" && block.type === "pushup") ||
+                    (e.key === "s" && block.type === "squat")
+                ) {
+                    if (block.y >= targetY - 20 && block.y <= targetY + 20) {
+                        score += 10;
+                        blocks.splice(index, 1); // Hit!
+                    }
+                }
+            });
+        });
+
+        gameLoop();
+    </script>
+</body>
+</html>
